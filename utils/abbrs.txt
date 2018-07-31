@@ -1,0 +1,18 @@
+(\W+|^)([sS][eE][eE]\s*[uU])(\W+|$)	\1see you\3
+(\W+|^)[eE][fF][cC][cC](\W+|$)	\1Economic and Financial Crimes Commission\2
+(\W+|^)[tT][tT][yY][lL](\W+|$)	\1talk to you later\2
+(\W+|^)[aA][sS][kK]\s*[4]	\1ask for 
+(\W+|^)[uU]\s+[hH]8(\W+|$)	\1you hate\2
+(\W+|^)[tT][hH][xX](\W+|$)	\1thanks\2
+(\W+|^)[oO][mM][gG](\W+|$)	\1oh my god\2
+(\W+|^)[lL][oO][lL](\W+|$)	\1\2
+(\W+|^)[pP][oO][vV](\W+|$)	\1point of view\2
+(\W+|^)[tT][mM][iI](\W+|$)	\1too much information\2
+(\W+|^)[rR][eE][fF](\W+|$)	\1reference\2
+(\W+|^)[aA][pP][pP](\W+|$)	\1application\2
+(\W+|^)[pP][iI][nN](\W+|$)	\1personal identification number\2
+(\W+|^)[wW][rR][tT](\W+|$)	\1with regard to\2
+(\W+|^)[gG][dD][pP](\W+|$)	\1gross domestic product\2
+(\W+|^)[eE]\.?[uU](\W+|$)	\1European Union\2
+(\W+|^)[qQ][cC](\W+|$)	\1quality control\2
+(\W+|^)[hH][qQ](\W+|$)	\1headquarters\2
