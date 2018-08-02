@@ -12,9 +12,31 @@ def read(time_interval):
     return dbu.read_from_db(time_interval,last_check_time)
 
 
-def chane_format(tweet):
-    new_tweet['id'] = tweet['id']
-    print(new_tweet)
+def chane_format(lxp_tweet):
+    my_tweet = {}
+    my_tweet['id'] = lxp_tweet['id']
+    my_tweet['conversation_id'] = lxp_tweet['conversation_id']
+    my_tweet['is_reply'] = lxp_tweet['is_reply']
+    my_tweet['created_at'] = lxp_tweet['created_at']
+
+    #user
+    my_tweet['user']['id'] = lxp_tweet['user']['user_id']
+
+    # text
+    my_tweet['entities']['hashtags'] = lxp_tweet['hashtags']
+    my_tweet['entities']['user_mentions'] = lxp_tweet['mentions']
+    my_tweet['orgn'] = lxp_tweet['raw_text']
+    my_tweet['lang'] = lxp_tweet['lang']
+    my_tweet['text'] = lxp_tweet['standard_text']
+
+    #action
+    my_tweet['retweet_count'] = lxp_tweet['action']['retweets']
+    my_tweet['favorite_count'] = lxp_tweet['action']['favorites']
+    my_tweet['in_reply_to_status_id'] = lxp_tweet['action']['retweet_id']
+    my_tweet['is_quote_status'] = lxp_tweet['action']['is_retweet'].lower()
+
+    #geo and time
+    print(my_tweet)
 time_interval = 20
 if __name__ == '__main__':
 
@@ -37,8 +59,7 @@ if __name__ == '__main__':
     tweet = {}
     new_tweet ={}
     twarr = fu.load_array(file)
-    for tw in twarr:
-        chane_format(tw)
+    print(twarr[1])
 
 
 
