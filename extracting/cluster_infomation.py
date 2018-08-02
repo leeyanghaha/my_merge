@@ -296,3 +296,13 @@ def write_cic_list(path, cic_list):
         # textarr = [tw[tk.key_text] for tw in cic.twarr]
         # fu.write_lines(textarr_file, textarr)
     print('    bext: output into files over')
+
+def cic_format(cic_list):
+    cic_list = sorted(cic_list, key=lambda item: len(item.twarr), reverse=True)
+    res = []
+    print('    bext: output cic list, len={}'.format(len(cic_list)))
+    for idx, cic in enumerate(cic_list):
+        cic.twarr = ClusterInfoGetter.group_similar_tweets(cic.twarr, process_num=10)
+        od = cic.construct_od()
+        res.append(od)
+    return res

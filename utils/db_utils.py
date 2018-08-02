@@ -6,12 +6,13 @@ from bson import objectid
 import time
 from multiprocessing import Process,Queue
 
-
-mongo2_address = '54.242.147.30:27017'
+mongo2_address = '54.161.160.206:29017'
+# mongo2_address = '54.242.147.30:27017'
 client = pymongo.MongoClient(mongo2_address)
+
 # db = client.test
-db = client.tweet
-db[collection] = db.positive_16
+tweet_db = client.tweet
+positive_16 = 'positive_16'
 clu_db = client.cluster
 
 
@@ -94,15 +95,13 @@ def read_from_db(time_interval,last_check_time):
     pw = Process(target=start_read,args=(q,time_interval,last_check_time))
     pw.start()
     time.sleep(time_interval)
-    return len(q.get())
-
-
-
+    return q.get()
 
 
 if __name__ == '__main__':
-    last_check_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print(read_from_db(10,last_check_time))
+    pass
+    # last_check_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    # print(read_from_db(10,last_check_time))
 
     # while(True):
     #     time.sleep(10)

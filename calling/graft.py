@@ -6,15 +6,18 @@ import utils.db_utils as dbu
 import multiprocessing as mp
 import datetime
 from bson import objectid
-dir = '/home/nfs/cdong/tw/seeding/Terrorist/queried/positive'
+dir = '/home/nfs/cdong/tw/seeding/Terrorist/queried/positive/'
 def read(time_interval):
     last_check_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     return dbu.read_from_db(time_interval,last_check_time)
 
+
+def chane_format(tweet):
+    new_tweet['id'] = tweet['id']
+    print(new_tweet)
 time_interval = 20
 if __name__ == '__main__':
-    for i in range(5):
-        print(read(10))
+
     # gen_time = datetime.datetime(2018, 4, 10)
     # dummy_id = objectid.ObjectId.from_datetime(gen_time)
     # read_iter_num = 10
@@ -27,9 +30,15 @@ if __name__ == '__main__':
     # condition = {'in_reply_to_status_id':None}
     # for tweet in dbu.find_by_condition(condition,limit_num=5):
     #     print(tweet)
-
+    file = '/home/nfs/cdong/tw/seeding/Terrorist/queried/positive/2016-01-01_shoot_Aviv.json'
     # files = fi.listchildren(dir,concat=True)
     # for file in files:
     #     twarr = fu.load_array(file)
-    #     for tw in twarr:
-    #         dbu.insert(tw)
+    tweet = {}
+    new_tweet ={}
+    twarr = fu.load_array(file)
+    for tw in twarr:
+        chane_format(tw)
+
+
+

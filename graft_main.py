@@ -10,9 +10,8 @@ import utils.multiprocess_utils as mu
 import utils.timer_utils as tmu
 import utils.email_utils as emu
 import time
-import warnings
-
-
+import utils.db_utils as dbu
+import datetime
 event_type = cci.event_t
 # filter & classify
 flt_pool_size = 12
@@ -28,6 +27,10 @@ beta = 0.01
 # extractorS
 ext_pool_size = 10
 
+#read time interval
+time_interval =10
+accumulate_threshold = 100
+
 
 def twarr2filter(twarr):
     """
@@ -37,6 +40,8 @@ def twarr2filter(twarr):
     """
     tw_batch = mu.split_multi_format(twarr, flt_pool_size)
     bflt.input_twarr_batch(tw_batch)
+
+
 # --del--
 #     fu.dump_array(history_twarr_len_file, [len(twarr)], overwrite=False)
 # output_base = './last_4000-ne_thres={}-clf_thres={}-hold_batch={}-batch_size={}-alpha={}-beta={}'.\
@@ -65,6 +70,8 @@ def filter2cluster(remain_workload=None):
     filtered_batches = au.merge_array(batches_of_batches)
     filtered_twarr = au.merge_array(filtered_batches)
     bclu.input_twarr(filtered_twarr)
+
+
 # --del--
 #     fu.dump_array(filtered_twarr_file, filtered_twarr, overwrite=False)
 #     fu.dump_array(history_filter_len_file, [len(filtered_twarr)], overwrite=False)
@@ -103,40 +110,44 @@ def main():
     """
     tmu.check_time('qwertyui')
     tmu.check_time('main line 116', print_func=None)
-    
-    bflt.start_pool(flt_pool_size, ne_threshold, clf_threshold, event_type)
-    bclu.start_pool(max_window_size, full_interval, alpha, beta)
-    bext.start_pool(ext_pool_size, event_type)
+    # bflt.start_pool(flt_pool_size, ne_threshold, clf_threshold, event_type)
+    # bclu.start_pool(max_window_size, full_interval, alpha, beta)
+    # bext.start_pool(ext_pool_size, event_type)
 
-    alarm = tmu.Alarm()
-    _sub_files = fi.listchildren("/home/nfs/cdong/tw/origin/", fi.TYPE_FILE, concat=True)[-4000:]
-    # positive_twarr = fu.load_array('/home/nfs/yangl/dc/calling/filtered_twarr.json')[:5000]
-    # _sub_files = fi.listchildren("/home/nfs/yangl/dc/input", fi.TYPE_FILE, concat=True)
-    for _idx, _file in enumerate(_sub_files):
-        _twarr = fu.load_array(_file)
-        if (_idx + 1) % 1000 == 0:
-            dt = tmu.check_time('main line 116', print_func=None)
-            emu.send_email('file {}/{}'.format(_idx + 1, len(_sub_files)), '{}s from last 1000 file'.format(dt))
-        if _idx > 0 and _idx % 10 == 0:
-            print("main: {} th twarr to filter, len: {}".format(_idx, len(_twarr)))
-        twarr2filter(_twarr)
+    last_check_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    time.sleep(time_interval)
+    _twarr, new_time = dbu.read_after_last_check(dbu.tweet_db, dbu.positive_16, last_check_time)
+    accumulate_tweet = _twarr
+    while(True):
+        alarm = tmu.Alarm()
+        while(len(accumulate_tweet) < accumulate_threshold):
+            time.sleep(10)
+            _twarr, new_time = dbu.read_after_last_check(dbu.tweet_db, dbu.positive_16, new_time)
+            accumulate_tweet.extend(_twarr)
+        print('main: {}th twarr to filter. '.format(len(accumulate_tweet)))
+
+        # _sub_files = fi.listchildren("/home/nfs/cdong/tw/origin/", fi.TYPE_FILE, concat=True)[-4000:]
+        # positive_twarr = fu.load_array('/home/nfs/yangl/dc/calling/filtered_twarr.json')[:5000]
+        # _sub_files = fi.listchildren("/home/nfs/yangl/dc/input", fi.TYPE_FILE, concat=True)
+        # if (_idx + 1) % 1000 == 0:
+        #     dt = tmu.check_time('main line 116', print_func=None)
+        #     emu.send_email('file {}/{}'.format(_idx + 1, len(_sub_files)), '{}s from last 1000 file'.format(dt))
+        # if _idx > 0 and _idx % 10 == 0:
+        #     print("main: {} th twarr to filter, len: {}".format(_idx, len(_twarr)))
+
+        twarr2filter(accumulate_tweet)
         filter2cluster()
         if alarm.is_time_elapse_bigger_than(check_every_sec):
             alarm.initialize_timestamp()
             filter2cluster(5)
             bclu.execute_cluster()
         cluster2extractor()
-
-    end_it()
-    tmu.check_time('qwertyui')
+        end_it()
+        accumulate_tweet = []
+        tmu.check_time('qwertyui')
 
 
 if __name__ == '__main__':
     tmu.check_time()
     main()
     tmu.check_time(print_func=lambda dt: print("total time elapsed {}s".format(dt)))
-    # 100  hours: 3914407  -> 93128  in 5695 s  (1.58 h),  threshold 0.1, thread 5
-    # 1000 hours: 40110901 -> 988585 in 60769 s (16.88 h), threshold 0.1, thread 5
-    # last 1000 hours: 37232413 -> 48193  in 7818 s (2.17 h), thread 15
-    
-    # 17 files/min, 4000/17=235 min=4 h,

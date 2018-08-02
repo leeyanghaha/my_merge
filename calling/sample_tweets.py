@@ -10,4 +10,4 @@ files = fi.listchildren(dir,concat=True)
 for file in files:
     twarr = fu.load_array(file)
     for tw in twarr:
-        dbu.insert(tw)
+        dbu.insert(dbu.tweet_db,dbu.positive_16,tw)

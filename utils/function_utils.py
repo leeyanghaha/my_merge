@@ -96,3 +96,7 @@ def load_twarr_from_bz2(bz2_file):
             continue
     fp.close()
     return twarr
+
+
+def change_tweet_format():
+    pass
