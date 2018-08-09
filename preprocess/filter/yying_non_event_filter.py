@@ -155,6 +155,7 @@ class EffectCheck:
         return probarr
     
     def filter(self, twarr, threshold):
+        print('yying_non_event_filter twarr: ', twarr)
         probarr = self.predict_proba(twarr)
         filter_twarr = [tw for idx, tw in enumerate(twarr) if probarr[idx] >= threshold]
         return filter_twarr

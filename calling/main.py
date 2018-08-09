@@ -12,22 +12,25 @@ import utils.email_utils as emu
 import time
 import warnings
 
+from config.configure import config
 
 event_type = cci.event_t
 # filter & classify
-flt_pool_size = 12
+flt_pool_size = 4
 ne_threshold = 0.4
 clf_threshold = 0.13
 # cluster
-check_every_sec = 180
-# check_every_sec =50
-max_window_size = 10
+# check_every_sec = 180
+check_every_sec = 20
+max_window_size = 7
 full_interval = 8
 alpha = 30
 beta = 0.01
-# extractorS
-ext_pool_size = 10
+# extractor
+# ext_pool_size = 10
+ext_pool_size = 5
 
+api_format = False
 
 def twarr2filter(twarr):
     """
@@ -71,6 +74,19 @@ def filter2cluster(remain_workload=None):
 # --del--
 
 
+def get_filter(remain_workload=None):
+    if remain_workload is None:
+        batches_of_batches = bflt.try_get_unread_batch_output()
+    else:
+        batches_of_batches = bflt.wait_get_unread_batch_output(remain_workload)
+    if not batches_of_batches:
+        return
+    batches_of_batches = bflt.try_get_unread_batch_output()
+    filtered_batches = au.merge_array(batches_of_batches)
+    filtered_twarr = au.merge_array(filtered_batches)
+    return filtered_twarr
+
+
 def cluster2extractor():
     """
     从聚类模块读取返回结果，输入聚类信息提取模块
@@ -93,6 +109,24 @@ def end_it():
     bext.end_pool()
 
 
+def my_end_it():
+    print('my reaching end')
+    res = []
+    filter2cluster(0)
+
+
+def mytest():
+    # alarm = tmu.Alarm()
+    bflt.start_pool(flt_pool_size, ne_threshold, clf_threshold, event_type)
+    file = '/home/nfs/yangl/merge/lxp_data/lxp_test.json'
+    _twarr = fu.load_array(file)[:5000]
+    _twarr = fu.change_from_lxp_format(_twarr)
+    twarr2filter(_twarr)
+    getter = bflt.wait_get_unread_batch_output(0)
+
+    return getter
+
+
 def main():
     """
     启动各进程（池），遍历 _sub_files 中的文件名，逐个读取文件内容，
@@ -109,11 +143,15 @@ def main():
     bext.start_pool(ext_pool_size, event_type)
 
     alarm = tmu.Alarm()
-    _sub_files = fi.listchildren("/home/nfs/cdong/tw/origin/", fi.TYPE_FILE, concat=True)[-4000:]
+    # _sub_files = fi.listchildren("/home/nfs/cdong/tw/origin/", fi.TYPE_FILE, concat=True)[-4000:]
     # positive_twarr = fu.load_array('/home/nfs/yangl/dc/calling/filtered_twarr.json')[:5000]
-    # _sub_files = fi.listchildren("/home/nfs/yangl/dc/input", fi.TYPE_FILE, concat=True)
+    _sub_files = fi.listchildren("/home/nfs/yangl/merge/lxp_data", fi.TYPE_FILE, concat=True)
+    # _twarr = fu.load_array(_sub_files[0])
+    # _twarr = fu.change_from_lxp_format(_twarr)
     for _idx, _file in enumerate(_sub_files):
         _twarr = fu.load_array(_file)
+        if config.using_api_format == 'False':
+            _twarr = fu.change_from_lxp_format(_twarr)
         if (_idx + 1) % 1000 == 0:
             dt = tmu.check_time('main line 116', print_func=None)
             emu.send_email('file {}/{}'.format(_idx + 1, len(_sub_files)), '{}s from last 1000 file'.format(dt))
@@ -126,13 +164,16 @@ def main():
             filter2cluster(5)
             bclu.execute_cluster()
         cluster2extractor()
-
+    print('sleeping....')
+    time.sleep(600)
     end_it()
     tmu.check_time('qwertyui')
 
 
 if __name__ == '__main__':
     tmu.check_time()
+    # with open('/home/nfs/yangl/merge/filered.json', 'a') as f:
+    #     print(mytest(), file=f)
     main()
     tmu.check_time(print_func=lambda dt: print("total time elapsed {}s".format(dt)))
     # 100  hours: 3914407  -> 93128  in 5695 s  (1.58 h),  threshold 0.1, thread 5

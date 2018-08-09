@@ -7,6 +7,7 @@ class Configure:
         path_module = 'path'
         file_module = 'files'
         mongodb = 'mongodb'
+        api_format = 'api-format'
         file_dir = os.path.abspath(os.path.dirname(__file__))
         # file_dir = os.path.split(os.path.realpath(__file__))[0]
         config_file_name = os.path.join(file_dir, 'conf.ini')
@@ -37,8 +38,13 @@ class Configure:
         self.k_ft_model_file = configreader.get(file_module, 'k_ft_model_file')
         self.k_lr_model_file = configreader.get(file_module, 'k_lr_model_file')
 
-        #db
-        self.mongo2 = configreader.get(mongodb,'ubuntu2')
+        # db
+        self.mongo2 = configreader.get(mongodb, 'ubuntu2')
+
+        # data format
+        self.api_format = configreader.get(api_format, 'format_file')
+        self.using_api_format = configreader.get(api_format, 'using_api_format')
+
 
 config = Configure()
 

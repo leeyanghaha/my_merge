@@ -58,12 +58,12 @@ def extract_sub_main(inq, outq):
             new_cluid_twarr_list = [(cluid, twarr, CIG.TAR_FULL) for cluid, twarr in new_cluid_twarr_list]
             extract_pool.set_batch_input(new_cluid_twarr_list)
             n_cic_list = extract_pool.get_batch_output()
-            format = cic_format(n_cic_list)
+            # format = cic_format(n_cic_list)
             # tmu.check_time('extract_sub_main', print_func=lambda dt: print('lline 49', dt))
             # print("    bext: get merged cic list, len {}".format(len(n_cic_list)))
-            collection = '{}_{}clusters'.format(counter,len(n_cic_list))
-            dbu.insert_many(dbu.clu_db,collection,format)
-            # write_cic_list(fi.join(OUT_BASE, "{}_{}clusters/").format(counter, len(n_cic_list)), n_cic_list)
+            # collection = '{}_{}clusters'.format(counter,len(n_cic_list))
+            # dbu.insert_many(dbu.clu_db,collection,format)
+            write_cic_list(fi.join(OUT_BASE, "{}_{}clusters/").format(counter, len(n_cic_list)), n_cic_list)
             counter += 1
         elif command == END_PROCESS:
             print('ending extract_sub_main')

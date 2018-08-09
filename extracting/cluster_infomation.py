@@ -5,6 +5,8 @@ from extracting.hot_and_level.event_hot import HotDegree, AttackHot
 from extracting.hot_and_level.event_level import AttackLevel
 from extracting.keyword_info.n_gram_keyword import get_quality_n_gram
 
+from config.configure import config
+
 import classifying.classifier_class_info as cci
 import utils.tweet_keys as tk
 import utils.spacy_utils as su
@@ -81,7 +83,10 @@ class ClusterInfoGetter:
                 len_score = exception_substitute
             try:
                 hd = HotDegree()
-                influ_score = np.array([hd.tw_propagation(tw) + hd.user_influence(tw[tk.key_user]) for tw in twarr])
+                if config.using_api_format == 'True':
+                    influ_score = np.array([hd.tw_propagation(tw) + hd.user_influence(tw[tk.key_user]) for tw in twarr])
+                else:
+                    influ_score = np.array([hd.tw_propagation(tw) for tw in twarr])
                 influ_score = np.log(influ_score + 1) * 0.4
             except:
                 print('influ_score error')
@@ -151,21 +156,25 @@ class ClusterInfoGetter:
         """ geo info """
         geo_freq_list = extract_geo_freq_list(twarr, docarr)
         geo_list = self.get_readable_geo_list(geo_freq_list)
+        # print('geo list: ', geo_list)
         if target == ClusterInfoGetter.TAR_FULL:
             # print('full info')
             """ summary info """
             prob = self.clf.predict_mean_proba(twarr)
             hot = self.hot.hot_degree(twarr)
             level = self.lvl.get_level(twarr)
+            # print('prob: {}, hot: {}, level: {}'.format(prob, hot, level))
             """ time info """
-            top_geo, top_freq = geo_freq_list[0] if geo_freq_list else (None, None)
-            text_times, most_time = get_text_time(twarr, top_geo, self.sutime_obj)
+            # top_geo, top_freq = geo_freq_list[0] if geo_freq_list else (None, None)
+            # text_times, most_time = get_text_time(twarr, top_geo, self.sutime_obj)
             earliest_time, latest_time = get_earlist_latest_post_time(twarr)
-            time_list = list(map(lambda t: t.isoformat(), [most_time, earliest_time, latest_time]))
-            # most_time_str = most_time.isoformat()
-            # earliest_time_str = earliest_time.isoformat()
-            # latest_time_str = latest_time.isoformat()
-            # time_list = [most_time_str, earliest_time_str, latest_time_str]
+            # print('earliest_time: {}, latest time: {}'.format(earliest_time, latest_time))
+            # time_list = list(map(lambda t: t.isoformat(), [most_time, earliest_time, latest_time]))
+            time_list = list(map(lambda t: t.isoformat(), [earliest_time, latest_time]))
+            # # most_time_str = most_time.isoformat()
+            # # earliest_time_str = earliest_time.isoformat()
+            # # latest_time_str = latest_time.isoformat()
+            # # time_list = [most_time_str, earliest_time_str, latest_time_str]
             """ keyword info """
             tokensarr, gram_keywords = get_quality_n_gram(txtarr, n_range=range(1, 5), len_thres=4)
             # auto_keywords = get_quality_autophrase(pidx, txtarr, conf_thres=0.5, len_thres=2)
@@ -173,7 +182,9 @@ class ClusterInfoGetter:
             idxes, keywords = au.group_and_reduce(keywords, dist_thres=0.3, process_num=0)
             max_keyword_num = int(50 * np.tanh((len(twarr) + 20) / 40))
             keywords = keywords[:max_keyword_num]
-            """ sort twarr """
+            # print('keywords: ', keywords)
+            # """ sort twarr """
+            # print('sorting........')
             twarr = self.importance_sort(twarr, docarr, tokensarr, keywords)
             twarr = self.clear_twarr_fields(twarr)
         return ClusterInfoCarrier(cluid, twarr, prob, hot, level, geo_list, time_list, keywords)
@@ -306,3 +317,14 @@ def cic_format(cic_list):
         od = cic.construct_od()
         res.append(od)
     return res
+
+
+if __name__ == '__main__':
+    dir = "/home/nfs/yangl/merge/lxp_data"
+    # dir2 = "/home/nfs/cdong/tw/seeding/Terrorist/queried/positive"
+    files = fi.listchildren(dir, concat=True)[:2]
+    getter = ClusterInfoGetter(cci.event_t)
+    for idx, file in enumerate(files):
+        twarr = fu.load_array(file)
+        twarr = fu.change_from_lxp_format(twarr)
+        getter.cluid_twarr2cic(idx, twarr, 1)

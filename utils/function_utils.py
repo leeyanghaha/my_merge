@@ -98,5 +98,66 @@ def load_twarr_from_bz2(bz2_file):
     return twarr
 
 
-def change_tweet_format():
-    pass
+def change_format(lxp_tweet, my_tweet):
+    import copy
+    from dateutil import parser
+    new_tweet = copy.deepcopy(my_tweet)
+    # my_tweet['id'] = lxp_tweet['_id']
+    # my_tweet['event_id'] = lxp_tweet['event_id']
+
+    # my_tweet['is_reply'] = lxp_tweet['is_reply']
+    new_tweet['created_at'] = parser.parse(lxp_tweet['tweet']['date']['$date']).strftime('%a %b %d %H:%M:%S %z %Y')
+
+    # user
+    new_tweet['id'] = lxp_tweet['_id']
+
+    # text
+    new_tweet['entities']['hashtags'] = lxp_tweet['tweet']['hashtags']
+    new_tweet['entities']['user_mentions'] = lxp_tweet['tweet']['mentions']
+    my_tweet['orgn'] = lxp_tweet['tweet']['text']
+    # my_tweet['lang'] = lxp_tweet['lang']
+    new_tweet['text'] = lxp_tweet['tweet']['text']
+
+
+    # action
+    new_tweet['retweet_count'] = lxp_tweet['tweet']['retweets']
+    new_tweet['favorite_count'] = lxp_tweet['tweet']['favorites']
+    # my_tweet['in_reply_to_status_id'] = lxp_tweet['action']['retweet_id']
+    # my_tweet['is_quote_status'] = lxp_tweet['action']['is_retweet'].lower()
+
+    # geo and time
+    return new_tweet
+
+
+def clear(my_tweet):
+    for key, value in my_tweet.items():
+        if isinstance(value, dict):
+            clear(value)
+        else:
+            my_tweet[key] = ''
+    return my_tweet
+
+
+def change_from_lxp_format(lxp_twarr, my_tweet=None):
+    res = []
+    with open('/home/nfs/yangl/merge/format.json') as f:
+        my_tweet = json.loads(f.readline())
+        for lxp_tw in lxp_twarr:
+           res.append(change_format(lxp_tw, my_tweet))
+    return res
+
+
+if __name__ == '__main__':
+    # file = '/home/nfs/cdong/tw/origin/2016_03_08_08.sum'
+    # tw = load_array(file)[342]
+    # with open('/home/nfs/yangl/merge/format.json','a') as f:
+    #     print(json.dumps(clear(tw)), file=f)
+
+    file = '/home/nfs/yangl/merge/lxp_data/lxp-test-500.json'
+    lxp_twarr = load_array(file)[:3]
+    with open('/home/nfs/yangl/merge/format.json') as f:
+        data = f.readline()
+        api_format = json.loads(data)
+        res = change_from_lxp_format(lxp_twarr)
+        for tw in res:
+            print(tw['text'])

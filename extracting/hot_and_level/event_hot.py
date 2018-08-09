@@ -5,6 +5,8 @@ import utils.function_utils as fu
 import utils.tweet_keys as tk
 import utils.file_iterator as fi
 
+from config.configure import config
+
 
 class HotDegree:
     def __init__(self):
@@ -12,13 +14,17 @@ class HotDegree:
         self.weight_time = 0.5
         self.w_propagation = 0.5
         self.weight_tweets_number = 0.001
-    
+
     def hot_degree(self, twarr):
         w_time = self.weight_time
-        average_hot = self.calculate_average_hot(twarr)
+        if config.using_api_format == 'True':
+            average_hot = self.calculate_average_hot(twarr)
+        else:
+            average_hot = 0
         duration_time = self.duration(twarr)
-        return 0.48 * average_hot + w_time * duration_time + w_time * math.sqrt(len(twarr))
-    
+        hot = 0.48 * average_hot + w_time * duration_time + w_time * math.sqrt(len(twarr))
+        return hot
+
     def calculate_average_hot(self, twarr):
         user_influence = propagation_influence = 0
         for idx, tw in enumerate(twarr):
@@ -44,7 +50,8 @@ class HotDegree:
         max_distance_hours = 0
         min_distance_hours = 50000000
         for idx, tw in enumerate(twarr):
-            year, month, day, hour = self.change_time_format(tw[tk.key_created_at])
+            tw_created_at = datetime.datetime.strptime(tw[tk.key_created_at], '%a %b %d %H:%M:%S %z %Y')
+            year, month, day, hour = tw_created_at.year, tw_created_at.month, tw_created_at.day, tw_created_at.hour
             distance = ((datetime.datetime(year, month, day) - datetime.datetime(1970, 1, 1)).days - 1) * 24 + hour
             if distance > max_distance_hours:
                 max_distance_hours = distance
@@ -63,5 +70,17 @@ class HotDegree:
 
 
 class AttackHot(HotDegree):
-    def __int__(self):
+    def __int__(self, api_format):
         HotDegree.__init__(self)
+
+
+if __name__ == "__main__":
+    dir = "/home/nfs/yangl/merge/lxp_data"
+    files = fi.listchildren(dir, concat=True)
+    hot = HotDegree()
+    for file in files:
+        twarr = fu.load_array(file)
+        twarr = fu.change_from_lxp_format(twarr)
+        print(file)
+        print(hot.hot_degree(twarr))
+

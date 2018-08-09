@@ -23,7 +23,8 @@ def filter_twarr_text(twarr):
     flt_twarr = list()
     for tw in twarr:
         # TODO text_orgn = tw.get(tk.key_text, '').strip()
-        text_orgn = tw.get(tk.key_orgntext, tw.get(tk.key_text, None)).strip()
+        text_orgn = tw.get(tk.key_text, '').strip()
+        # text_orgn = tw.get(tk.key_orgntext, tw.get(tk.key_text, None)).strip()
         if not text_orgn:
             continue
         text_norm = pu.text_normalization(text_orgn).strip()
@@ -54,8 +55,9 @@ def filter_and_classify_main(inq, outq):
         # len1 = len(twarr)
         # print(len1)
         twarr = filter_twarr_text(twarr)
-        flt_twarr = ne_filter.filter(twarr, ne_threshold)
-        flt_twarr = clf_filter.filter(flt_twarr, clf_threshold)
+        # flt_twarr = ne_filter.filter(twarr, ne_threshold)
+        #flt_twarr = clf_filter.filter(flt_twarr, clf_threshold)
+        flt_twarr = clf_filter.filter(twarr, clf_threshold)
         # len4 = len(twarr)
         # print('{}->{}'.format(len1, len4))
 
@@ -147,3 +149,19 @@ def wait_get_unread_batch_output(remain_workload):
         batches = get_batch_output()
         res_batches.append(batches)
     return res_batches
+
+
+if __name__ == '__main__':
+    from config.configure import config
+    import json
+    file = '/home/nfs/yangl/merge/lxp_data/lxp-test-500.json'
+    import utils.function_utils as fu
+    with open(config.api_format) as f:
+        data = f.readline()
+        api_format = json.loads(data)
+        twarr = fu.load_array(file)
+        twarr = fu.change_from_lxp_format(twarr,api_format)
+
+        filtered = filter_twarr_text(twarr)
+
+
