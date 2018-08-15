@@ -106,22 +106,21 @@ def change_format(lxp_tweet, my_tweet):
     # my_tweet['event_id'] = lxp_tweet['event_id']
 
     # my_tweet['is_reply'] = lxp_tweet['is_reply']
-    new_tweet['created_at'] = parser.parse(lxp_tweet['tweet']['date']['$date']).strftime('%a %b %d %H:%M:%S %z %Y')
-
+    # TODO created_at 可能存在问题
+    new_tweet['created_at'] = lxp_tweet['tweet']['created_at'].strftime('%a %b %d %H:%M:%S %z %Y')
     # user
-    new_tweet['id'] = lxp_tweet['_id']
+    new_tweet['id'] = lxp_tweet['tweet']['id']
 
     # text
     new_tweet['entities']['hashtags'] = lxp_tweet['tweet']['hashtags']
     new_tweet['entities']['user_mentions'] = lxp_tweet['tweet']['mentions']
-    my_tweet['orgn'] = lxp_tweet['tweet']['text']
-    # my_tweet['lang'] = lxp_tweet['lang']
-    new_tweet['text'] = lxp_tweet['tweet']['text']
-
+    new_tweet['orgn'] = lxp_tweet['tweet']['raw_text']
+    my_tweet['lang'] = lxp_tweet['tweet']['lang']
+    new_tweet['text'] = lxp_tweet['tweet']['standard_text']
 
     # action
-    new_tweet['retweet_count'] = lxp_tweet['tweet']['retweets']
-    new_tweet['favorite_count'] = lxp_tweet['tweet']['favorites']
+    new_tweet['retweet_count'] = lxp_tweet['tweet']['action']['retweets']
+    new_tweet['favorite_count'] = lxp_tweet['tweet']['action']['favorites']
     # my_tweet['in_reply_to_status_id'] = lxp_tweet['action']['retweet_id']
     # my_tweet['is_quote_status'] = lxp_tweet['action']['is_retweet'].lower()
 

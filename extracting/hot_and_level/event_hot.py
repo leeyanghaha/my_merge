@@ -50,13 +50,16 @@ class HotDegree:
         max_distance_hours = 0
         min_distance_hours = 50000000
         for idx, tw in enumerate(twarr):
-            tw_created_at = datetime.datetime.strptime(tw[tk.key_created_at], '%a %b %d %H:%M:%S %z %Y')
-            year, month, day, hour = tw_created_at.year, tw_created_at.month, tw_created_at.day, tw_created_at.hour
-            distance = ((datetime.datetime(year, month, day) - datetime.datetime(1970, 1, 1)).days - 1) * 24 + hour
-            if distance > max_distance_hours:
-                max_distance_hours = distance
-            if distance < min_distance_hours:
-                min_distance_hours = distance
+            try:
+                tw_created_at = datetime.datetime.strptime(tw[tk.key_created_at], '%a %b %d %H:%M:%S %z %Y')
+                year, month, day, hour = tw_created_at.year, tw_created_at.month, tw_created_at.day, tw_created_at.hour
+                distance = ((datetime.datetime(year, month, day) - datetime.datetime(1970, 1, 1)).days - 1) * 24 + hour
+                if distance > max_distance_hours:
+                    max_distance_hours = distance
+                if distance < min_distance_hours:
+                    min_distance_hours = distance
+            except:
+                continue
         return max_distance_hours - min_distance_hours
     
     def change_time_format(self, format_str):

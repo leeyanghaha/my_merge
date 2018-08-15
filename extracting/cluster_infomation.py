@@ -170,7 +170,8 @@ class ClusterInfoGetter:
             earliest_time, latest_time = get_earlist_latest_post_time(twarr)
             # print('earliest_time: {}, latest time: {}'.format(earliest_time, latest_time))
             # time_list = list(map(lambda t: t.isoformat(), [most_time, earliest_time, latest_time]))
-            time_list = list(map(lambda t: t.isoformat(), [earliest_time, latest_time]))
+            if earliest_time is not None and latest_time is not None:
+                time_list = list(map(lambda t: t.isoformat(), [earliest_time, latest_time]))
             # # most_time_str = most_time.isoformat()
             # # earliest_time_str = earliest_time.isoformat()
             # # latest_time_str = latest_time.isoformat()

@@ -9,28 +9,29 @@ import utils.function_utils as fu
 import utils.multiprocess_utils as mu
 import utils.timer_utils as tmu
 import utils.email_utils as emu
+import utils.db_utils as dbu
 import time
 import warnings
 
 from config.configure import config
 
-event_type = cci.event_t
+event_type = cci.event_nd
 # filter & classify
-flt_pool_size = 4
+flt_pool_size = 8
 ne_threshold = 0.4
 clf_threshold = 0.13
 # cluster
 # check_every_sec = 180
-check_every_sec = 20
-max_window_size = 7
+check_every_sec = 2
+max_window_size = 1
 full_interval = 8
+# alpha = 30
 alpha = 30
+# beta = 0.01
 beta = 0.01
 # extractor
-# ext_pool_size = 10
-ext_pool_size = 5
-
-api_format = False
+ext_pool_size = 10
+# ext_pool_size = 5
 
 
 def twarr2filter(twarr):
@@ -71,25 +72,10 @@ def filter2cluster(remain_workload=None):
     filtered_batches = au.merge_array(batches_of_batches)
     filtered_twarr = au.merge_array(filtered_batches)
     bclu.input_twarr(filtered_twarr)
-
-
 # --del--
 #     fu.dump_array(filtered_twarr_file, filtered_twarr, overwrite=False)
 #     fu.dump_array(history_filter_len_file, [len(filtered_twarr)], overwrite=False)
 # --del--
-
-
-def get_filter(remain_workload=None):
-    if remain_workload is None:
-        batches_of_batches = bflt.try_get_unread_batch_output()
-    else:
-        batches_of_batches = bflt.wait_get_unread_batch_output(remain_workload)
-    if not batches_of_batches:
-        return
-    batches_of_batches = bflt.try_get_unread_batch_output()
-    filtered_batches = au.merge_array(batches_of_batches)
-    filtered_twarr = au.merge_array(filtered_batches)
-    return filtered_twarr
 
 
 def cluster2extractor():
@@ -114,24 +100,6 @@ def end_it():
     bext.end_pool()
 
 
-def my_end_it():
-    print('my reaching end')
-    res = []
-    filter2cluster(0)
-
-
-def mytest():
-    # alarm = tmu.Alarm()
-    bflt.start_pool(flt_pool_size, ne_threshold, clf_threshold, event_type)
-    file = '/home/nfs/yangl/merge/lxp_data/lxp_test.json'
-    _twarr = fu.load_array(file)[:5000]
-    _twarr = fu.change_from_lxp_format(_twarr)
-    twarr2filter(_twarr)
-    getter = bflt.wait_get_unread_batch_output(0)
-
-    return getter
-
-
 def main():
     """
     启动各进程（池），遍历 _sub_files 中的文件名，逐个读取文件内容，
@@ -150,26 +118,39 @@ def main():
     alarm = tmu.Alarm()
     # _sub_files = fi.listchildren("/home/nfs/cdong/tw/origin/", fi.TYPE_FILE, concat=True)[-4000:]
     # positive_twarr = fu.load_array('/home/nfs/yangl/dc/calling/filtered_twarr.json')[:5000]
-    _sub_files = fi.listchildren("/home/nfs/yangl/merge/lxp_data", fi.TYPE_FILE, concat=True)
+    # _sub_files = fi.listchildren("/home/nfs/yangl/merge/lxp_data", fi.TYPE_FILE, concat=True)
     # _twarr = fu.load_array(_sub_files[0])
     # _twarr = fu.change_from_lxp_format(_twarr)
-    for _idx, _file in enumerate(_sub_files):
-        _twarr = fu.load_array(_file)
+    start_time = dbu.find_one(dbu.nd_db, dbu.nd)['tweet']['created_at']
+    count = 0
+    while True:
+        _twarr = dbu.read_after_last_check(dbu.nd_db, dbu.nd, start_time, limit=10000)
+        print('*************len(_twarr){}**********'.format(len(_twarr)))
+        if len(_twarr) > 0:
+            end_time = _twarr[-1]['tweet']['created_at']
+        print('read {} tweets. since {} from {}'.format(len(_twarr), start_time, end_time))
+        if len(_twarr) == 0:
+            print('no new data arrive....')
+            break
         if config.using_api_format == 'False':
             _twarr = fu.change_from_lxp_format(_twarr)
-        if (_idx + 1) % 1000 == 0:
-            dt = tmu.check_time('main line 116', print_func=None)
-            emu.send_email('file {}/{}'.format(_idx + 1, len(_sub_files)), '{}s from last 1000 file'.format(dt))
-        if _idx > 0 and _idx % 10 == 0:
-            print("main: {} th twarr to filter, len: {}".format(_idx, len(_twarr)))
+        # if (_idx + 1) % 1000 == 0:
+        #     dt = tmu.check_time('main line 116', print_func=None)
+        #     emu.send_email('file {}/{}'.format(_idx + 1, len(_sub_files)), '{}s from last 1000 file'.format(dt))
+        # if _idx > 0 and _idx % 10 == 0:
+        #     print("main: {} th twarr to filter, len: {}".format(_idx, len(_twarr)))
+        print('main: {} tweets to filter'.format(len(_twarr)))
+        count += len(_twarr)
         twarr2filter(_twarr)
         filter2cluster()
         if alarm.is_time_elapse_bigger_than(check_every_sec):
             alarm.initialize_timestamp()
             filter2cluster(5)
             bclu.execute_cluster()
+            time.sleep(20)
         cluster2extractor()
-    print('sleeping....')
+        start_time = end_time
+    print('waiting for main process ending......')
     time.sleep(600)
     end_it()
     tmu.check_time('qwertyui')

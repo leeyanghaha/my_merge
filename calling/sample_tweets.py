@@ -5,9 +5,21 @@ import utils.function_utils as fu
 import utils.db_utils as dbu
 import multiprocessing as mp
 import datetime
-dir = '/home/nfs/cdong/tw/seeding/Terrorist/queried/positive'
-files = fi.listchildren(dir,concat=True)
-for file in files:
-    twarr = fu.load_array(file)
-    for tw in twarr:
-        dbu.insert(dbu.tweet_db,dbu.positive_16,tw)
+# dir = '/home/nfs/cdong/tw/seeding/Terrorist/queried/positive'
+# dir = '/home/nfs/yangl/merge/lxp_data'
+# files = fi.listchildren(dir, concat=True)
+# count = 0
+# for file in files:
+#     twarr = fu.load_array(file)
+#     for tw in twarr:
+#         count += 1
+#         dbu.insert(dbu.lxp_db, dbu.lxp_test, tw)
+#         print('insert {} tweets to lxp_db.lxp_test.'.format(count))
+
+file = '/home/nfs/yangl/merge/change_lxp_test.json'
+twarr = fu.load_array(file)
+count = 0
+for tw in twarr:
+    count += 1
+    dbu.insert(dbu.lxp_db, dbu.lxp_test, tw)
+    print('insert {} tweets to lxp_db.lxp_test.'.format(count))

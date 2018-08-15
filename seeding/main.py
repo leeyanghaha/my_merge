@@ -193,6 +193,10 @@ seed_queries = [
       'all_of': ['Maryland', 'flood', ], }, ['2016', '7', '29'], ['2016', '8', '7']],
     [{'any_of': ['damage', 'disaster', '\Wdead\W', 'death', 'kill', 'missing', 'rainfall', 'rescue', ],
       'all_of': ['Pakistan', 'flood', ], }, ['2016', '4', '2'], ['2016', '4', '8']],
+    [{'any_of': ['damage', 'disaster', '\Wdead\W', 'death', 'missing', 'rainfall', 'rescue', ],
+     'all_of': ['hurricane', 'Florida', ]}, ['2017', '1', '1'], ['2017', '12', '1']],
+    [{'any_of': ['damage', 'disaster', '\Wdead\W', 'death', 'missing', 'rainfall', 'rescue', ],
+      'all_of': ['hurricane', 'Texas', ]}, ['2017', '1', '1'], ['2017', '12', '12']]
 ]
 # seed_parser = SeedParser([], theme='NaturalDisaster', description='Describes event of natural disaster events')
 
