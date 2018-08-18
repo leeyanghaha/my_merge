@@ -11,6 +11,7 @@ import utils.timer_utils as tmu
 import utils.email_utils as emu
 import utils.db_utils as dbu
 import time
+import datetime
 import warnings
 
 from config.configure import config
@@ -22,7 +23,7 @@ ne_threshold = 0.4
 clf_threshold = 0.13
 # cluster
 # check_every_sec = 180
-check_every_sec = 2
+check_every_sec = 25
 max_window_size = 1
 full_interval = 8
 # alpha = 30
@@ -121,14 +122,12 @@ def main():
     # _sub_files = fi.listchildren("/home/nfs/yangl/merge/lxp_data", fi.TYPE_FILE, concat=True)
     # _twarr = fu.load_array(_sub_files[0])
     # _twarr = fu.change_from_lxp_format(_twarr)
-    start_time = dbu.find_one(dbu.nd_db, dbu.nd)['tweet']['created_at']
+    last_check_time = datetime.datetime.now()
     count = 0
     while True:
-        _twarr = dbu.read_after_last_check(dbu.nd_db, dbu.nd, start_time, limit=10000)
+        time.sleep(5*60)
+        _twarr, new_time = dbu.read_after_last_check(dbu.nd_db, dbu.nd, last_check_time)
         print('*************len(_twarr){}**********'.format(len(_twarr)))
-        if len(_twarr) > 0:
-            end_time = _twarr[-1]['tweet']['created_at']
-        print('read {} tweets. since {} from {}'.format(len(_twarr), start_time, end_time))
         if len(_twarr) == 0:
             print('no new data arrive....')
             break
@@ -149,7 +148,7 @@ def main():
             bclu.execute_cluster()
             time.sleep(20)
         cluster2extractor()
-        start_time = end_time
+        last_check_time = new_time
     print('waiting for main process ending......')
     time.sleep(600)
     end_it()

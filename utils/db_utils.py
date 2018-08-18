@@ -2,7 +2,7 @@ import pymongo
 import utils.file_iterator as fi
 import utils.function_utils as fu
 import datetime
-from bson import objectid
+from bson.objectid import ObjectId
 import time
 from multiprocessing import Process,Queue
 
@@ -14,13 +14,17 @@ from multiprocessing import Process,Queue
 # tweet_db = client.tweet
 # positive_16 = 'positive_16'
 # clu_db = client.cluster
-# lxp_db = client.lxp_data
-# lxp_test = 'test'
+
 
 mongo3_address = '54.161.160.206:27017'
 client = pymongo.MongoClient(mongo3_address)
 nd_db = client.natural_disaster
+format_db = client.format_db
 nd = 'dataset'
+api_format = 'api_format'
+lxp_db = client.lxp_data
+lxp_test = 'test'
+
 
 def insert(db, collection, tweet):
     db[collection].insert_one(tweet)
@@ -76,44 +80,33 @@ def delete_collection(db, collection, name):
         raise ValueError('no such collection in {} '.format(db))
 
 
+# def read_after_last_check(db, collection, last_check_time, limit=None):
+#     res = []
+#     for idx, tw in enumerate(db[collection].find({'tweet.created_at': {'$lt': last_check_time}})):
+#         if limit is not None and idx > limit:
+#             break
+#         res.append(tw)
+#     return res
+
+
 def read_after_last_check(db, collection, last_check_time, limit=None):
     res = []
-    for idx, tw in enumerate(db[collection].find({'tweet.created_at': {'$lt': last_check_time}})):
+    beijing_time = datetime.datetime.fromtimestamp(last_check_time.timestamp() - 8*3600)
+    dummy_id = ObjectId.from_datetime(beijing_time)
+    for idx, tw in enumerate(db[collection].find({'_id': {'$gt': dummy_id}})):
         if limit is not None and idx > limit:
             break
         res.append(tw)
-    return res
-
-
-def start_read(outq, time_interval, last_check_time):
-    while(True):
-        time.sleep(time_interval)
-        # print(last_check_time)
-        interval_tweet, new_time = read_after_last_check(last_check_time)
-        outq.put(interval_tweet)
-        # print(len(interval_tweet))
-        last_check_time = new_time
-
-
-def read_from_db(time_interval, last_check_time):
-    q = Queue()
-    pw = Process(target=start_read, args=(q, time_interval, last_check_time))
-    pw.start()
-    time.sleep(time_interval)
-    return q.get()
+    return res, datetime.datetime.now()
 
 
 if __name__ == '__main__':
-     tweet = (nd_db, nd)
-     import utils.function_utils as fu
-     import json
-     start_time = find_one(nd_db, nd)['tweet']['created_at']
-     my = find_one(nd_db, nd)['tweet']['created_at'].strftime('%a %b %d %H:%M:%S %z %Y')
-     print(start_time, my)
-     # from dateutil import parser
-     # my = parser.parse(my).strftime('%a %b %d %H:%M:%S %z %Y')
-     # print(my)
-
+    last_check_time = datetime.datetime.now()
+    while(True):
+        time.sleep(10)
+        twarr, now = read_after_last_check(lxp_db, lxp_test, last_check_time)
+        print('{} tweets read from db'.format(len(twarr)))
+        last_check_time = now
 
 
 

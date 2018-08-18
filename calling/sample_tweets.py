@@ -16,9 +16,10 @@ import datetime
 #         dbu.insert(dbu.lxp_db, dbu.lxp_test, tw)
 #         print('insert {} tweets to lxp_db.lxp_test.'.format(count))
 
-file = '/home/nfs/yangl/merge/change_lxp_test.json'
+file = '/home/nfs/yangl/merge/lxp_test.json'
 twarr = fu.load_array(file)
 count = 0
+import json
 for tw in twarr:
     count += 1
     dbu.insert(dbu.lxp_db, dbu.lxp_test, tw)
